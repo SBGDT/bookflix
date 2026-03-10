@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>BOOKFLIX</title>
+
+<style>
+
+body{
+margin:0;
+background:#141414;
+color:white;
+font-family:Arial;
+}
+
+.navbar{
+background:black;
+padding:15px;
+display:flex;
+gap:15px;
+align-items:center;
+}
+
+.logo{
+color:#e50914;
+font-size:26px;
+font-weight:bold;
+}
+
+input{
+padding:8px;
+border:none;
+border-radius:4px;
+}
+
+#results{
+display:flex;
+flex-wrap:wrap;
+gap:20px;
+padding:20px;
+}
+
+.book{
+width:150px;
+position:relative;
+cursor:pointer;
+}
+
+.book img{
+width:100%;
+border-radius:6px;
+transition:0.3s;
+}
+
+.book:hover img{
+transform:scale(1.15);
+}
+
+/* HOVER CARD */
+
+.hoverCard{
+position:absolute;
+bottom:0;
+left:0;
+right:0;
+background:rgba(0,0,0,0.85);
+padding:10px;
+opacity:0;
+transition:0.3s;
+border-radius:0 0 6px 6px;
+}
+
+.book:hover .hoverCard{
+opacity:1;
+}
+
+.readBtn{
+background:#e50914;
+border:none;
+color:white;
+padding:5px 10px;
+margin-top:5px;
+cursor:pointer;
+}
+
+/* READER */
+
+#reader{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:black;
+display:none;
+flex-direction:column;
+}
+
+#reader iframe{
+flex:1;
+border:none;
+}
+
+#closeReader{
+background:#e50914;
+border:none;
+color:white;
+padding:10px;
+cursor:pointer;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="navbar">
+
+<div class="logo">BOOKFLIX</div>
+
+<input id="searchBox" placeholder="Search books...">
+
+<button onclick="searchBooks()">Search</button>
+
+</div>
+
+<div id="results"></div>
+
+<div id="reader">
+
+<button id="closeReader" onclick="closeReader()">Close Reader</button>
+
+<iframe id="readerFrame"></iframe>
+
+</div>
+
+<script>
+
+async function searchBooks(){
+
+let query=document.getElementById("searchBox").value;
+
+if(query===""){
+query="fantasy";
+}
+
+let response=await fetch("https://openlibrary.org/search.json?q="+query);
+
+let data=await response.json();
+
+let results=document.getElementById("results");
+
+results.innerHTML="";
+
+data.docs
+.filter(book => book.cover_i)
+.slice(0,20)
+.forEach(book=>{
+
+let cover=book.cover_i
+? "https://covers.openlibrary.org/b/id/"+book.cover_i+"-M.jpg"
+: "https://via.placeholder.com/150x220?text=No+Cover";
+
+let author=book.author_name ? book.author_name[0] : "Unknown";
+
+let div=document.createElement("div");
+div.className="book";
+
+div.innerHTML=`
+<img src="${cover}">
+<div class="hoverCard">
+<b>${book.title}</b><br>
+${author}<br>
+<button class="readBtn">READ</button>
+</div>
+`;
+
+div.querySelector(".readBtn").onclick=(e)=>{
+e.stopPropagation();
+openReader(book.key);
+};
+
+results.appendChild(div);
+
+});
+
+}
+
+function openReader(workKey){
+
+document.getElementById("reader").style.display="flex";
+
+document.getElementById("readerFrame").src =
+"https://openlibrary.org"+workKey;
+
+}
+
+function closeReader(){
+
+document.getElementById("reader").style.display="none";
+document.getElementById("readerFrame").src="";
+
+}
+
+searchBooks();
+
+</script>
+
+</body>
+</html>
