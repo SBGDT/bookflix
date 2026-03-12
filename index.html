@@ -1,7 +1,11 @@
 <!DOCTYPE html>
 <html>
+
 <head>
+
 <title>BOOKFLIX</title>
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
 
@@ -20,6 +24,7 @@ padding:15px;
 display:flex;
 gap:15px;
 align-items:center;
+flex-wrap:wrap;
 }
 
 .logo{
@@ -37,7 +42,7 @@ border-radius:4px;
 /* FEATURED BANNER */
 
 #featured{
-height:400px;
+min-height:350px;
 background-size:cover;
 background-position:center;
 display:flex;
@@ -68,6 +73,7 @@ display:flex;
 flex-wrap:wrap;
 gap:20px;
 padding:20px;
+justify-content:center;
 }
 
 .book{
@@ -93,11 +99,12 @@ position:absolute;
 bottom:0;
 left:0;
 right:0;
-background:rgba(0,0,0,0.85);
+background:rgba(0,0,0,0.9);
 padding:10px;
 opacity:0;
 transition:0.3s;
 border-radius:0 0 6px 6px;
+font-size:14px;
 }
 
 .book:hover .hoverCard{
@@ -124,6 +131,7 @@ height:100%;
 background:black;
 display:none;
 flex-direction:column;
+z-index:1000;
 }
 
 #reader iframe{
@@ -135,11 +143,44 @@ border:none;
 background:#e50914;
 border:none;
 color:white;
-padding:10px;
+padding:12px;
 cursor:pointer;
+font-size:16px;
+}
+
+/* MOBILE */
+
+@media (max-width:700px){
+
+.book{
+width:40%;
+}
+
+#featured{
+padding:20px;
+}
+
+#featured h1{
+font-size:24px;
+}
+
+}
+
+@media (max-width:450px){
+
+.book{
+width:80%;
+}
+
+.navbar{
+flex-direction:column;
+align-items:flex-start;
+}
+
 }
 
 </style>
+
 </head>
 
 <body>
@@ -167,7 +208,7 @@ cursor:pointer;
 
 </div>
 
-<!-- RESULTS -->
+<!-- BOOK RESULTS -->
 
 <div id="results"></div>
 
@@ -214,7 +255,7 @@ openReader(featuredBookKey);
 
 }
 
-/* SEARCH */
+/* SEARCH BOOKS */
 
 async function searchBooks(){
 
@@ -242,6 +283,7 @@ let cover="https://covers.openlibrary.org/b/id/"+book.cover_i+"-M.jpg";
 let author=book.author_name ? book.author_name[0] : "Unknown";
 
 let div=document.createElement("div");
+
 div.className="book";
 
 div.innerHTML=`
@@ -278,6 +320,7 @@ document.getElementById("readerFrame").src =
 function closeReader(){
 
 document.getElementById("reader").style.display="none";
+
 document.getElementById("readerFrame").src="";
 
 }
@@ -285,9 +328,11 @@ document.getElementById("readerFrame").src="";
 /* LOAD PAGE */
 
 loadFeatured();
+
 searchBooks();
 
 </script>
 
 </body>
+
 </html>
