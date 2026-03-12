@@ -1,9 +1,8 @@
-
+```html
 <!DOCTYPE html>
 <html>
 
 <head>
-
 <title>BOOKFLIX</title>
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,6 +14,45 @@ margin:0;
 background:#141414;
 color:white;
 font-family:Arial;
+}
+
+/* LOADING SCREEN */
+
+#loader{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:black;
+display:flex;
+align-items:center;
+justify-content:center;
+flex-direction:column;
+z-index:9999;
+}
+
+.loaderB{
+font-size:120px;
+font-weight:bold;
+color:#e50914;
+animation: glow 1.5s infinite alternate;
+}
+
+@keyframes glow{
+from{
+text-shadow:0 0 10px #e50914;
+transform:scale(1);
+}
+to{
+text-shadow:0 0 40px #e50914;
+transform:scale(1.15);
+}
+}
+
+.loadingText{
+margin-top:10px;
+color:#aaa;
 }
 
 /* NAVBAR */
@@ -59,17 +97,9 @@ border-radius:6px;
 max-width:400px;
 }
 
-#featured button{
-background:#e50914;
-color:white;
-border:none;
-padding:10px 15px;
-cursor:pointer;
-}
-
 /* BOOK SECTIONS */
 
-#results, #searchResults{
+#results,#searchResults{
 display:flex;
 flex-wrap:wrap;
 gap:20px;
@@ -94,8 +124,6 @@ transition:0.3s;
 .book:hover img{
 transform:scale(1.15);
 }
-
-/* HOVER CARD */
 
 .hoverCard{
 position:absolute;
@@ -148,7 +176,6 @@ border:none;
 color:white;
 padding:12px;
 cursor:pointer;
-font-size:16px;
 }
 
 /* FOOTER */
@@ -163,61 +190,43 @@ font-size:12px;
 /* MOBILE */
 
 @media (max-width:700px){
-
-.book{
-width:40%;
-}
-
-#featured{
-padding:20px;
-}
-
-#featured h1{
-font-size:24px;
-}
-
+.book{width:40%;}
+#featured{padding:20px;}
+#featured h1{font-size:24px;}
 }
 
 @media (max-width:450px){
-
-.book{
-width:80%;
-}
-
-.navbar{
-flex-direction:column;
-align-items:flex-start;
-}
-
+.book{width:80%;}
+.navbar{flex-direction:column;align-items:flex-start;}
 }
 
 </style>
-
 </head>
 
 <body>
+
+<!-- LOADING SCREEN -->
+
+<div id="loader">
+<div class="loaderB">B</div>
+<div class="loadingText">BOOKFLIX loading...</div>
+</div>
 
 <div class="navbar">
 
 <div class="logo" onclick="goHome()">BOOKFLIX</div>
 
 <input id="searchBox" placeholder="Search books...">
-
 <button onclick="searchBooks()">Search</button>
 
 </div>
 
-<!-- FEATURED -->
-
 <div id="featured">
-
 <div id="featuredInfo">
 <h1 id="featuredTitle"></h1>
 <p id="featuredAuthor"></p>
-
 <button onclick="readFeatured()">READ</button>
 </div>
-
 </div>
 
 <h2 style="padding-left:20px;">Search Results</h2>
@@ -226,14 +235,9 @@ align-items:flex-start;
 <h2 style="padding-left:20px;">More Like This</h2>
 <div id="results"></div>
 
-<!-- READER -->
-
 <div id="reader">
-
 <button id="closeReader" onclick="closeReader()">Close Reader</button>
-
 <iframe id="readerFrame"></iframe>
-
 </div>
 
 <footer>
@@ -248,11 +252,10 @@ let featuredBookKey="";
 
 async function loadFeatured(){
 
-let response=await fetch("https://openlibrary.org/search.json?q=fantasy");
-
+let response=await fetch("https://openlibrary.org/search.json?q=fantasy&has_fulltext=true");
 let data=await response.json();
 
-let book=data.docs.find(b=>b.cover_i);
+let book=data.docs.find(b=>b.cover_i && b.edition_key);
 
 let cover="https://covers.openlibrary.org/b/id/"+book.cover_i+"-L.jpg";
 
@@ -263,12 +266,8 @@ document.getElementById("featuredTitle").innerText=book.title;
 document.getElementById("featuredAuthor").innerText=
 book.author_name ? book.author_name[0] : "Unknown";
 
-featuredBookKey=book.key;
+featuredBookKey=book.edition_key[0];
 
-}
-
-function readFeatured(){
-openReader(featuredBookKey);
 }
 
 /* SEARCH */
@@ -278,27 +277,22 @@ async function searchBooks(){
 document.getElementById("featured").style.display="none";
 
 let query=document.getElementById("searchBox").value;
+if(query===""){query="fantasy";}
 
-if(query===""){
-query="fantasy";
-}
-
-let response=await fetch("https://openlibrary.org/search.json?q="+query);
-
+let response=await fetch("https://openlibrary.org/search.json?q="+query+"&has_fulltext=true");
 let data=await response.json();
 
 let results=document.getElementById("searchResults");
-
 results.innerHTML="";
 
 data.docs
-.filter(book => book.cover_i)
+.filter(book=>book.cover_i && book.edition_key)
 .slice(0,20)
 .forEach(book=>{
 
 let cover="https://covers.openlibrary.org/b/id/"+book.cover_i+"-M.jpg";
-
 let author=book.author_name ? book.author_name[0] : "Unknown";
+let edition=book.edition_key[0];
 
 let div=document.createElement("div");
 div.className="book";
@@ -314,7 +308,7 @@ ${author}<br>
 
 div.querySelector(".readBtn").onclick=(e)=>{
 e.stopPropagation();
-openReader(book.key);
+openReader(edition);
 };
 
 results.appendChild(div);
@@ -327,22 +321,20 @@ results.appendChild(div);
 
 async function loadRecommendations(){
 
-let response=await fetch("https://openlibrary.org/search.json?q=classic");
-
+let response=await fetch("https://openlibrary.org/search.json?q=classic&has_fulltext=true");
 let data=await response.json();
 
 let results=document.getElementById("results");
-
 results.innerHTML="";
 
 data.docs
-.filter(book => book.cover_i)
+.filter(book=>book.cover_i && book.edition_key)
 .slice(0,20)
 .forEach(book=>{
 
 let cover="https://covers.openlibrary.org/b/id/"+book.cover_i+"-M.jpg";
-
 let author=book.author_name ? book.author_name[0] : "Unknown";
+let edition=book.edition_key[0];
 
 let div=document.createElement("div");
 div.className="book";
@@ -358,7 +350,7 @@ ${author}<br>
 
 div.querySelector(".readBtn").onclick=(e)=>{
 e.stopPropagation();
-openReader(book.key);
+openReader(edition);
 };
 
 results.appendChild(div);
@@ -369,19 +361,17 @@ results.appendChild(div);
 
 /* READER */
 
-function openReader(workKey){
+function openReader(edition){
 
 document.getElementById("reader").style.display="flex";
-
-document.getElementById("readerFrame").src =
-"https://openlibrary.org"+workKey;
+document.getElementById("readerFrame").src=
+"https://openlibrary.org/books/"+edition+"/embed";
 
 }
 
 function closeReader(){
 
 document.getElementById("reader").style.display="none";
-
 document.getElementById("readerFrame").src="";
 
 }
@@ -391,19 +381,25 @@ document.getElementById("readerFrame").src="";
 function goHome(){
 
 document.getElementById("featured").style.display="flex";
-
 document.getElementById("searchResults").innerHTML="";
 
 }
 
-/* LOAD PAGE */
+/* PAGE LOAD */
 
-loadFeatured();
-loadRecommendations();
+async function startSite(){
+
+await loadFeatured();
+await loadRecommendations();
+
+document.getElementById("loader").style.display="none";
+
+}
+
+startSite();
 
 </script>
 
 </body>
-
 </html>
-
+```
