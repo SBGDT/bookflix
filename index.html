@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html>
 
@@ -31,6 +32,7 @@ flex-wrap:wrap;
 color:#e50914;
 font-size:26px;
 font-weight:bold;
+cursor:pointer;
 }
 
 input{
@@ -39,7 +41,7 @@ border:none;
 border-radius:4px;
 }
 
-/* FEATURED BANNER */
+/* FEATURED */
 
 #featured{
 min-height:350px;
@@ -63,18 +65,19 @@ color:white;
 border:none;
 padding:10px 15px;
 cursor:pointer;
-font-size:16px;
 }
 
-/* BOOK GRID */
+/* BOOK SECTIONS */
 
-#results{
+#results, #searchResults{
 display:flex;
 flex-wrap:wrap;
 gap:20px;
 padding:20px;
 justify-content:center;
 }
+
+/* BOOK CARD */
 
 .book{
 width:150px;
@@ -148,6 +151,15 @@ cursor:pointer;
 font-size:16px;
 }
 
+/* FOOTER */
+
+footer{
+text-align:center;
+color:#888;
+padding:30px;
+font-size:12px;
+}
+
 /* MOBILE */
 
 @media (max-width:700px){
@@ -187,7 +199,7 @@ align-items:flex-start;
 
 <div class="navbar">
 
-<div class="logo">BOOKFLIX</div>
+<div class="logo" onclick="goHome()">BOOKFLIX</div>
 
 <input id="searchBox" placeholder="Search books...">
 
@@ -195,7 +207,7 @@ align-items:flex-start;
 
 </div>
 
-<!-- FEATURED BOOK -->
+<!-- FEATURED -->
 
 <div id="featured">
 
@@ -208,8 +220,10 @@ align-items:flex-start;
 
 </div>
 
-<!-- BOOK RESULTS -->
+<h2 style="padding-left:20px;">Search Results</h2>
+<div id="searchResults"></div>
 
+<h2 style="padding-left:20px;">More Like This</h2>
 <div id="results"></div>
 
 <!-- READER -->
@@ -222,11 +236,15 @@ align-items:flex-start;
 
 </div>
 
+<footer>
+made by liam rodriguez
+</footer>
+
 <script>
 
 let featuredBookKey="";
 
-/* FEATURED BOOK */
+/* FEATURED */
 
 async function loadFeatured(){
 
@@ -250,14 +268,14 @@ featuredBookKey=book.key;
 }
 
 function readFeatured(){
-
 openReader(featuredBookKey);
-
 }
 
-/* SEARCH BOOKS */
+/* SEARCH */
 
 async function searchBooks(){
+
+document.getElementById("featured").style.display="none";
 
 let query=document.getElementById("searchBox").value;
 
@@ -266,6 +284,50 @@ query="fantasy";
 }
 
 let response=await fetch("https://openlibrary.org/search.json?q="+query);
+
+let data=await response.json();
+
+let results=document.getElementById("searchResults");
+
+results.innerHTML="";
+
+data.docs
+.filter(book => book.cover_i)
+.slice(0,20)
+.forEach(book=>{
+
+let cover="https://covers.openlibrary.org/b/id/"+book.cover_i+"-M.jpg";
+
+let author=book.author_name ? book.author_name[0] : "Unknown";
+
+let div=document.createElement("div");
+div.className="book";
+
+div.innerHTML=`
+<img src="${cover}">
+<div class="hoverCard">
+<b>${book.title}</b><br>
+${author}<br>
+<button class="readBtn">READ</button>
+</div>
+`;
+
+div.querySelector(".readBtn").onclick=(e)=>{
+e.stopPropagation();
+openReader(book.key);
+};
+
+results.appendChild(div);
+
+});
+
+}
+
+/* RECOMMENDATIONS */
+
+async function loadRecommendations(){
+
+let response=await fetch("https://openlibrary.org/search.json?q=classic");
 
 let data=await response.json();
 
@@ -283,7 +345,6 @@ let cover="https://covers.openlibrary.org/b/id/"+book.cover_i+"-M.jpg";
 let author=book.author_name ? book.author_name[0] : "Unknown";
 
 let div=document.createElement("div");
-
 div.className="book";
 
 div.innerHTML=`
@@ -325,14 +386,24 @@ document.getElementById("readerFrame").src="";
 
 }
 
+/* HOME */
+
+function goHome(){
+
+document.getElementById("featured").style.display="flex";
+
+document.getElementById("searchResults").innerHTML="";
+
+}
+
 /* LOAD PAGE */
 
 loadFeatured();
-
-searchBooks();
+loadRecommendations();
 
 </script>
 
 </body>
 
 </html>
+```
