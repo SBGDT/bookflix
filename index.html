@@ -1,14 +1,71 @@
-<div id="featured">
+<!DOCTYPE html>
+<html>
+<head>
+<title>BOOKFLIX</title>
 
-<div id="featuredInfo">
-<h1 id="featuredTitle"></h1>
-<p id="featuredAuthor"></p>
+<style>
 
-<button onclick="readFeatured()">READ</button>
+body{
+margin:0;
+background:#141414;
+color:white;
+font-family:Arial;
+}
 
-</div>
+/* NAVBAR */
 
-</div>flex-wrap:wrap;
+.navbar{
+background:black;
+padding:15px;
+display:flex;
+gap:15px;
+align-items:center;
+}
+
+.logo{
+color:#e50914;
+font-size:26px;
+font-weight:bold;
+}
+
+input{
+padding:8px;
+border:none;
+border-radius:4px;
+}
+
+/* FEATURED BANNER */
+
+#featured{
+height:400px;
+background-size:cover;
+background-position:center;
+display:flex;
+align-items:center;
+padding:40px;
+}
+
+#featuredInfo{
+background:rgba(0,0,0,0.6);
+padding:20px;
+border-radius:6px;
+max-width:400px;
+}
+
+#featured button{
+background:#e50914;
+color:white;
+border:none;
+padding:10px 15px;
+cursor:pointer;
+font-size:16px;
+}
+
+/* BOOK GRID */
+
+#results{
+display:flex;
+flex-wrap:wrap;
 gap:20px;
 padding:20px;
 }
@@ -35,6 +92,205 @@ transform:scale(1.15);
 position:absolute;
 bottom:0;
 left:0;
+right:0;
+background:rgba(0,0,0,0.85);
+padding:10px;
+opacity:0;
+transition:0.3s;
+border-radius:0 0 6px 6px;
+}
+
+.book:hover .hoverCard{
+opacity:1;
+}
+
+.readBtn{
+background:#e50914;
+border:none;
+color:white;
+padding:5px 10px;
+margin-top:5px;
+cursor:pointer;
+}
+
+/* READER */
+
+#reader{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:black;
+display:none;
+flex-direction:column;
+}
+
+#reader iframe{
+flex:1;
+border:none;
+}
+
+#closeReader{
+background:#e50914;
+border:none;
+color:white;
+padding:10px;
+cursor:pointer;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="navbar">
+
+<div class="logo">BOOKFLIX</div>
+
+<input id="searchBox" placeholder="Search books...">
+
+<button onclick="searchBooks()">Search</button>
+
+</div>
+
+<!-- FEATURED BOOK -->
+
+<div id="featured">
+
+<div id="featuredInfo">
+<h1 id="featuredTitle"></h1>
+<p id="featuredAuthor"></p>
+
+<button onclick="readFeatured()">READ</button>
+</div>
+
+</div>
+
+<!-- RESULTS -->
+
+<div id="results"></div>
+
+<!-- READER -->
+
+<div id="reader">
+
+<button id="closeReader" onclick="closeReader()">Close Reader</button>
+
+<iframe id="readerFrame"></iframe>
+
+</div>
+
+<script>
+
+let featuredBookKey="";
+
+/* FEATURED BOOK */
+
+async function loadFeatured(){
+
+let response=await fetch("https://openlibrary.org/search.json?q=fantasy");
+
+let data=await response.json();
+
+let book=data.docs.find(b=>b.cover_i);
+
+let cover="https://covers.openlibrary.org/b/id/"+book.cover_i+"-L.jpg";
+
+document.getElementById("featured").style.backgroundImage="url("+cover+")";
+
+document.getElementById("featuredTitle").innerText=book.title;
+
+document.getElementById("featuredAuthor").innerText=
+book.author_name ? book.author_name[0] : "Unknown";
+
+featuredBookKey=book.key;
+
+}
+
+function readFeatured(){
+
+openReader(featuredBookKey);
+
+}
+
+/* SEARCH */
+
+async function searchBooks(){
+
+let query=document.getElementById("searchBox").value;
+
+if(query===""){
+query="fantasy";
+}
+
+let response=await fetch("https://openlibrary.org/search.json?q="+query);
+
+let data=await response.json();
+
+let results=document.getElementById("results");
+
+results.innerHTML="";
+
+data.docs
+.filter(book => book.cover_i)
+.slice(0,20)
+.forEach(book=>{
+
+let cover="https://covers.openlibrary.org/b/id/"+book.cover_i+"-M.jpg";
+
+let author=book.author_name ? book.author_name[0] : "Unknown";
+
+let div=document.createElement("div");
+div.className="book";
+
+div.innerHTML=`
+<img src="${cover}">
+<div class="hoverCard">
+<b>${book.title}</b><br>
+${author}<br>
+<button class="readBtn">READ</button>
+</div>
+`;
+
+div.querySelector(".readBtn").onclick=(e)=>{
+e.stopPropagation();
+openReader(book.key);
+};
+
+results.appendChild(div);
+
+});
+
+}
+
+/* READER */
+
+function openReader(workKey){
+
+document.getElementById("reader").style.display="flex";
+
+document.getElementById("readerFrame").src =
+"https://openlibrary.org"+workKey;
+
+}
+
+function closeReader(){
+
+document.getElementById("reader").style.display="none";
+document.getElementById("readerFrame").src="";
+
+}
+
+/* LOAD PAGE */
+
+loadFeatured();
+searchBooks();
+
+</script>
+
+</body>
+</html>left:0;
 right:0;
 background:rgba(0,0,0,0.85);
 padding:10px;
@@ -182,3 +438,4 @@ searchBooks();
 </body>
 
 </html>
+
