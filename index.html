@@ -1,7 +1,6 @@
-
+```html
 <!DOCTYPE html>
 <html>
-
 <head>
 <title>BOOKFLIX</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -29,7 +28,7 @@ flex-direction:column;
 align-items:center;
 justify-content:center;
 z-index:9999;
-transition:opacity 1s ease;
+transition:opacity 1s;
 }
 
 #loader.fade{
@@ -39,25 +38,14 @@ pointer-events:none;
 
 .loaderB{
 font-size:120px;
-font-weight:bold;
 color:#e50914;
-animation: glow 1.4s infinite alternate;
+font-weight:bold;
+animation:glow 1.4s infinite alternate;
 }
 
 @keyframes glow{
-from{
-transform:scale(1);
-text-shadow:0 0 10px #e50914;
-}
-to{
-transform:scale(1.15);
-text-shadow:0 0 40px #e50914;
-}
-}
-
-.loadingText{
-color:#aaa;
-margin-top:10px;
+from{transform:scale(1);text-shadow:0 0 10px #e50914;}
+to{transform:scale(1.15);text-shadow:0 0 40px #e50914;}
 }
 
 /* NAVBAR */
@@ -195,7 +183,6 @@ font-size:12px;
 @media (max-width:700px){
 .book{width:40%;}
 #featured{padding:20px;}
-#featured h1{font-size:24px;}
 }
 
 @media (max-width:450px){
@@ -208,11 +195,9 @@ font-size:12px;
 
 <body>
 
-<!-- LOADER -->
-
 <div id="loader">
 <div class="loaderB">B</div>
-<div class="loadingText">BOOKFLIX loading...</div>
+<div>BOOKFLIX loading...</div>
 </div>
 
 <div class="navbar">
@@ -246,35 +231,68 @@ made by liam rodriguez
 
 <script>
 
-let featuredBookKey="";
+let featuredEdition="";
 
-/* FEATURED */
+/* FEATURED BOOK */
 
 async function loadFeatured(){
 
 try{
 
-let response=await fetch("https://openlibrary.org/search.json?q=fantasy&has_fulltext=true");
-let data=await response.json();
+let res=await fetch("https://openlibrary.org/search.json?q=harry+potter");
+let data=await res.json();
 
 let book=data.docs.find(b=>b.cover_i && b.edition_key);
 
 if(!book) return;
 
-let cover="https://covers.openlibrary.org/b/id/"+book.cover_i+"-L.jpg";
-
-document.getElementById("featured").style.backgroundImage="url("+cover+")";
+featuredEdition=book.edition_key[0];
 
 document.getElementById("featuredTitle").innerText=book.title;
 
 document.getElementById("featuredAuthor").innerText=
-book.author_name ? book.author_name[0] : "Unknown";
+book.author_name?book.author_name[0]:"Unknown";
 
-featuredBookKey=book.edition_key[0];
+document.getElementById("featured").style.backgroundImage=
+"url(https://covers.openlibrary.org/b/id/"+book.cover_i+"-L.jpg)";
 
 }catch(e){
 console.log("Featured failed");
 }
+
+}
+
+/* CREATE BOOK CARD */
+
+function createBook(book,parent){
+
+let cover=book.cover_i
+?"https://covers.openlibrary.org/b/id/"+book.cover_i+"-M.jpg"
+:"https://via.placeholder.com/150x220?text=Book";
+
+let author=book.author_name?book.author_name[0]:"Unknown";
+let edition=book.edition_key?book.edition_key[0]:null;
+
+if(!edition) return;
+
+let div=document.createElement("div");
+div.className="book";
+
+div.innerHTML=`
+<img src="${cover}">
+<div class="hoverCard">
+<b>${book.title}</b><br>
+${author}<br>
+<button class="readBtn">READ</button>
+</div>
+`;
+
+div.querySelector(".readBtn").onclick=(e)=>{
+e.stopPropagation();
+openReader(edition);
+};
+
+parent.appendChild(div);
 
 }
 
@@ -284,44 +302,15 @@ async function searchBooks(){
 
 document.getElementById("featured").style.display="none";
 
-let query=document.getElementById("searchBox").value;
-if(query===""){query="fantasy";}
+let query=document.getElementById("searchBox").value||"fantasy";
 
-let response=await fetch("https://openlibrary.org/search.json?q="+query+"&has_fulltext=true");
-let data=await response.json();
+let res=await fetch("https://openlibrary.org/search.json?q="+query);
+let data=await res.json();
 
-let results=document.getElementById("searchResults");
-results.innerHTML="";
+let container=document.getElementById("searchResults");
+container.innerHTML="";
 
-data.docs
-.filter(book=>book.cover_i && book.edition_key)
-.slice(0,20)
-.forEach(book=>{
-
-let cover="https://covers.openlibrary.org/b/id/"+book.cover_i+"-M.jpg";
-let author=book.author_name ? book.author_name[0] : "Unknown";
-let edition=book.edition_key[0];
-
-let div=document.createElement("div");
-div.className="book";
-
-div.innerHTML=`
-<img src="${cover}">
-<div class="hoverCard">
-<b>${book.title}</b><br>
-${author}<br>
-<button class="readBtn">READ</button>
-</div>
-`;
-
-div.querySelector(".readBtn").onclick=(e)=>{
-e.stopPropagation();
-openReader(edition);
-};
-
-results.appendChild(div);
-
-});
+data.docs.slice(0,20).forEach(b=>createBook(b,container));
 
 }
 
@@ -331,44 +320,16 @@ async function loadRecommendations(){
 
 try{
 
-let response=await fetch("https://openlibrary.org/search.json?q=classic&has_fulltext=true");
-let data=await response.json();
+let res=await fetch("https://openlibrary.org/search.json?q=classic");
+let data=await res.json();
 
-let results=document.getElementById("results");
-results.innerHTML="";
+let container=document.getElementById("results");
+container.innerHTML="";
 
-data.docs
-.filter(book=>book.cover_i && book.edition_key)
-.slice(0,20)
-.forEach(book=>{
-
-let cover="https://covers.openlibrary.org/b/id/"+book.cover_i+"-M.jpg";
-let author=book.author_name ? book.author_name[0] : "Unknown";
-let edition=book.edition_key[0];
-
-let div=document.createElement("div");
-div.className="book";
-
-div.innerHTML=`
-<img src="${cover}">
-<div class="hoverCard">
-<b>${book.title}</b><br>
-${author}<br>
-<button class="readBtn">READ</button>
-</div>
-`;
-
-div.querySelector(".readBtn").onclick=(e)=>{
-e.stopPropagation();
-openReader(edition);
-};
-
-results.appendChild(div);
-
-});
+data.docs.slice(0,20).forEach(b=>createBook(b,container));
 
 }catch(e){
-console.log("Recommendations failed");
+console.log("recommendations failed");
 }
 
 }
@@ -378,6 +339,7 @@ console.log("Recommendations failed");
 function openReader(edition){
 
 document.getElementById("reader").style.display="flex";
+
 document.getElementById("readerFrame").src=
 "https://openlibrary.org/books/"+edition+"/embed";
 
@@ -399,19 +361,19 @@ document.getElementById("searchResults").innerHTML="";
 
 }
 
-/* START */
+/* START SITE */
 
 loadFeatured();
 loadRecommendations();
 
-/* FADE LOADER AFTER 2s */
+/* REMOVE LOADER */
 
 setTimeout(()=>{
 document.getElementById("loader").classList.add("fade");
-},2000);
+},1800);
 
 </script>
 
 </body>
 </html>
-
+```
