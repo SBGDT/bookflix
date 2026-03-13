@@ -1,10 +1,9 @@
-```html
+
 <!DOCTYPE html>
 <html>
 
 <head>
 <title>BOOKFLIX</title>
-
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -167,24 +166,20 @@ font-size:12px;
 <body>
 
 <div class="navbar">
-
 <div class="logo" onclick="goHome()">BOOKFLIX</div>
 
 <input id="searchBox" placeholder="Search books...">
 <button onclick="searchBooks()">Search</button>
-
 </div>
 
 <!-- FEATURED -->
 
 <div id="featured">
-
 <div id="featuredInfo">
 <h1 id="featuredTitle"></h1>
 <p id="featuredAuthor"></p>
 <button onclick="readFeatured()">READ</button>
 </div>
-
 </div>
 
 <h2 style="padding-left:20px;">Search Results</h2>
@@ -196,11 +191,8 @@ font-size:12px;
 <!-- READER -->
 
 <div id="reader">
-
 <button id="closeReader" onclick="closeReader()">Close Reader</button>
-
 <iframe id="readerFrame"></iframe>
-
 </div>
 
 <footer>
@@ -211,17 +203,58 @@ made by liam rodriguez
 
 let featuredBookKey="";
 
-/* FEATURED BOOK */
+/* CREATE BOOK CARD */
+
+function createBook(book,parent){
+
+let cover = book.cover_i
+? "https://covers.openlibrary.org/b/id/"+book.cover_i+"-M.jpg"
+: "https://via.placeholder.com/150x220?text=Book";
+
+let author = book.author_name ? book.author_name[0] : "Unknown";
+
+let edition = book.edition_key ? book.edition_key[0] : null;
+
+let div=document.createElement("div");
+div.className="book";
+
+div.innerHTML=`
+<img src="${cover}">
+<div class="hoverCard">
+<b>${book.title}</b><br>
+${author}<br>
+<button class="readBtn">READ</button>
+</div>
+`;
+
+div.querySelector(".readBtn").onclick=(e)=>{
+e.stopPropagation();
+if(edition){
+openReader(edition);
+}else{
+alert("Preview not available for this book.");
+}
+};
+
+parent.appendChild(div);
+
+}
+
+/* FEATURED */
 
 async function loadFeatured(){
 
-let response=await fetch("https://openlibrary.org/search.json?q=fantasy&has_fulltext=true");
+let res=await fetch("https://openlibrary.org/search.json?q=fantasy");
 
-let data=await response.json();
+let data=await res.json();
 
-let book=data.docs.find(b=>b.cover_i && b.edition_key);
+let book=data.docs[0];
 
-let cover="https://covers.openlibrary.org/b/id/"+book.cover_i+"-L.jpg";
+if(!book) return;
+
+let cover=book.cover_i
+? "https://covers.openlibrary.org/b/id/"+book.cover_i+"-L.jpg"
+: "";
 
 document.getElementById("featured").style.backgroundImage="url("+cover+")";
 
@@ -230,12 +263,14 @@ document.getElementById("featuredTitle").innerText=book.title;
 document.getElementById("featuredAuthor").innerText=
 book.author_name ? book.author_name[0] : "Unknown";
 
-featuredBookKey=book.edition_key[0];
+featuredBookKey = book.edition_key ? book.edition_key[0] : "";
 
 }
 
 function readFeatured(){
+if(featuredBookKey){
 openReader(featuredBookKey);
+}
 }
 
 /* SEARCH */
@@ -248,45 +283,16 @@ let query=document.getElementById("searchBox").value;
 
 if(query===""){query="fantasy";}
 
-let response=await fetch("https://openlibrary.org/search.json?q="+query+"&has_fulltext=true");
+let res=await fetch("https://openlibrary.org/search.json?q="+encodeURIComponent(query));
 
-let data=await response.json();
+let data=await res.json();
 
 let results=document.getElementById("searchResults");
 
 results.innerHTML="";
 
-data.docs
-.filter(book=>book.cover_i && book.edition_key)
-.slice(0,20)
-.forEach(book=>{
-
-let cover="https://covers.openlibrary.org/b/id/"+book.cover_i+"-M.jpg";
-
-let author=book.author_name ? book.author_name[0] : "Unknown";
-
-let edition=book.edition_key[0];
-
-let div=document.createElement("div");
-
-div.className="book";
-
-div.innerHTML=`
-<img src="${cover}">
-<div class="hoverCard">
-<b>${book.title}</b><br>
-${author}<br>
-<button class="readBtn">READ</button>
-</div>
-`;
-
-div.querySelector(".readBtn").onclick=(e)=>{
-e.stopPropagation();
-openReader(edition);
-};
-
-results.appendChild(div);
-
+data.docs.slice(0,20).forEach(book=>{
+createBook(book,results);
 });
 
 }
@@ -295,45 +301,16 @@ results.appendChild(div);
 
 async function loadRecommendations(){
 
-let response=await fetch("https://openlibrary.org/search.json?q=classic&has_fulltext=true");
+let res=await fetch("https://openlibrary.org/search.json?q=classic");
 
-let data=await response.json();
+let data=await res.json();
 
 let results=document.getElementById("results");
 
 results.innerHTML="";
 
-data.docs
-.filter(book=>book.cover_i && book.edition_key)
-.slice(0,20)
-.forEach(book=>{
-
-let cover="https://covers.openlibrary.org/b/id/"+book.cover_i+"-M.jpg";
-
-let author=book.author_name ? book.author_name[0] : "Unknown";
-
-let edition=book.edition_key[0];
-
-let div=document.createElement("div");
-
-div.className="book";
-
-div.innerHTML=`
-<img src="${cover}">
-<div class="hoverCard">
-<b>${book.title}</b><br>
-${author}<br>
-<button class="readBtn">READ</button>
-</div>
-`;
-
-div.querySelector(".readBtn").onclick=(e)=>{
-e.stopPropagation();
-openReader(edition);
-};
-
-results.appendChild(div);
-
+data.docs.slice(0,20).forEach(book=>{
+createBook(book,results);
 });
 
 }
@@ -367,7 +344,15 @@ document.getElementById("searchResults").innerHTML="";
 
 }
 
-/* PAGE LOAD */
+/* ENTER KEY SEARCH */
+
+document.getElementById("searchBox").addEventListener("keypress",function(e){
+if(e.key==="Enter"){
+searchBooks();
+}
+});
+
+/* LOAD PAGE */
 
 loadFeatured();
 loadRecommendations();
@@ -377,4 +362,4 @@ loadRecommendations();
 </body>
 
 </html>
-```
+
