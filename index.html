@@ -1,8 +1,10 @@
 ```html
 <!DOCTYPE html>
 <html>
+
 <head>
 <title>BOOKFLIX</title>
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -12,40 +14,6 @@ margin:0;
 background:#141414;
 color:white;
 font-family:Arial;
-}
-
-/* LOADER */
-
-#loader{
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-background:black;
-display:flex;
-flex-direction:column;
-align-items:center;
-justify-content:center;
-z-index:9999;
-transition:opacity 1s;
-}
-
-#loader.fade{
-opacity:0;
-pointer-events:none;
-}
-
-.loaderB{
-font-size:120px;
-color:#e50914;
-font-weight:bold;
-animation:glow 1.4s infinite alternate;
-}
-
-@keyframes glow{
-from{transform:scale(1);text-shadow:0 0 10px #e50914;}
-to{transform:scale(1.15);text-shadow:0 0 40px #e50914;}
 }
 
 /* NAVBAR */
@@ -90,7 +58,7 @@ border-radius:6px;
 max-width:400px;
 }
 
-/* BOOK GRID */
+/* BOOK SECTIONS */
 
 #results,#searchResults{
 display:flex;
@@ -99,6 +67,8 @@ gap:20px;
 padding:20px;
 justify-content:center;
 }
+
+/* BOOK CARD */
 
 .book{
 width:150px;
@@ -183,6 +153,7 @@ font-size:12px;
 @media (max-width:700px){
 .book{width:40%;}
 #featured{padding:20px;}
+#featured h1{font-size:24px;}
 }
 
 @media (max-width:450px){
@@ -195,23 +166,25 @@ font-size:12px;
 
 <body>
 
-<div id="loader">
-<div class="loaderB">B</div>
-<div>BOOKFLIX loading...</div>
-</div>
-
 <div class="navbar">
+
 <div class="logo" onclick="goHome()">BOOKFLIX</div>
+
 <input id="searchBox" placeholder="Search books...">
 <button onclick="searchBooks()">Search</button>
+
 </div>
 
+<!-- FEATURED -->
+
 <div id="featured">
+
 <div id="featuredInfo">
 <h1 id="featuredTitle"></h1>
 <p id="featuredAuthor"></p>
 <button onclick="readFeatured()">READ</button>
 </div>
+
 </div>
 
 <h2 style="padding-left:20px;">Search Results</h2>
@@ -220,9 +193,14 @@ font-size:12px;
 <h2 style="padding-left:20px;">More Like This</h2>
 <div id="results"></div>
 
+<!-- READER -->
+
 <div id="reader">
+
 <button id="closeReader" onclick="closeReader()">Close Reader</button>
+
 <iframe id="readerFrame"></iframe>
+
 </div>
 
 <footer>
@@ -231,51 +209,66 @@ made by liam rodriguez
 
 <script>
 
-let featuredEdition="";
+let featuredBookKey="";
 
 /* FEATURED BOOK */
 
 async function loadFeatured(){
 
-try{
+let response=await fetch("https://openlibrary.org/search.json?q=fantasy&has_fulltext=true");
 
-let res=await fetch("https://openlibrary.org/search.json?q=harry+potter");
-let data=await res.json();
+let data=await response.json();
 
 let book=data.docs.find(b=>b.cover_i && b.edition_key);
 
-if(!book) return;
+let cover="https://covers.openlibrary.org/b/id/"+book.cover_i+"-L.jpg";
 
-featuredEdition=book.edition_key[0];
+document.getElementById("featured").style.backgroundImage="url("+cover+")";
 
 document.getElementById("featuredTitle").innerText=book.title;
 
 document.getElementById("featuredAuthor").innerText=
-book.author_name?book.author_name[0]:"Unknown";
+book.author_name ? book.author_name[0] : "Unknown";
 
-document.getElementById("featured").style.backgroundImage=
-"url(https://covers.openlibrary.org/b/id/"+book.cover_i+"-L.jpg)";
-
-}catch(e){
-console.log("Featured failed");
-}
+featuredBookKey=book.edition_key[0];
 
 }
 
-/* CREATE BOOK CARD */
+function readFeatured(){
+openReader(featuredBookKey);
+}
 
-function createBook(book,parent){
+/* SEARCH */
 
-let cover=book.cover_i
-?"https://covers.openlibrary.org/b/id/"+book.cover_i+"-M.jpg"
-:"https://via.placeholder.com/150x220?text=Book";
+async function searchBooks(){
 
-let author=book.author_name?book.author_name[0]:"Unknown";
-let edition=book.edition_key?book.edition_key[0]:null;
+document.getElementById("featured").style.display="none";
 
-if(!edition) return;
+let query=document.getElementById("searchBox").value;
+
+if(query===""){query="fantasy";}
+
+let response=await fetch("https://openlibrary.org/search.json?q="+query+"&has_fulltext=true");
+
+let data=await response.json();
+
+let results=document.getElementById("searchResults");
+
+results.innerHTML="";
+
+data.docs
+.filter(book=>book.cover_i && book.edition_key)
+.slice(0,20)
+.forEach(book=>{
+
+let cover="https://covers.openlibrary.org/b/id/"+book.cover_i+"-M.jpg";
+
+let author=book.author_name ? book.author_name[0] : "Unknown";
+
+let edition=book.edition_key[0];
 
 let div=document.createElement("div");
+
 div.className="book";
 
 div.innerHTML=`
@@ -292,25 +285,9 @@ e.stopPropagation();
 openReader(edition);
 };
 
-parent.appendChild(div);
+results.appendChild(div);
 
-}
-
-/* SEARCH */
-
-async function searchBooks(){
-
-document.getElementById("featured").style.display="none";
-
-let query=document.getElementById("searchBox").value||"fantasy";
-
-let res=await fetch("https://openlibrary.org/search.json?q="+query);
-let data=await res.json();
-
-let container=document.getElementById("searchResults");
-container.innerHTML="";
-
-data.docs.slice(0,20).forEach(b=>createBook(b,container));
+});
 
 }
 
@@ -318,19 +295,46 @@ data.docs.slice(0,20).forEach(b=>createBook(b,container));
 
 async function loadRecommendations(){
 
-try{
+let response=await fetch("https://openlibrary.org/search.json?q=classic&has_fulltext=true");
 
-let res=await fetch("https://openlibrary.org/search.json?q=classic");
-let data=await res.json();
+let data=await response.json();
 
-let container=document.getElementById("results");
-container.innerHTML="";
+let results=document.getElementById("results");
 
-data.docs.slice(0,20).forEach(b=>createBook(b,container));
+results.innerHTML="";
 
-}catch(e){
-console.log("recommendations failed");
-}
+data.docs
+.filter(book=>book.cover_i && book.edition_key)
+.slice(0,20)
+.forEach(book=>{
+
+let cover="https://covers.openlibrary.org/b/id/"+book.cover_i+"-M.jpg";
+
+let author=book.author_name ? book.author_name[0] : "Unknown";
+
+let edition=book.edition_key[0];
+
+let div=document.createElement("div");
+
+div.className="book";
+
+div.innerHTML=`
+<img src="${cover}">
+<div class="hoverCard">
+<b>${book.title}</b><br>
+${author}<br>
+<button class="readBtn">READ</button>
+</div>
+`;
+
+div.querySelector(".readBtn").onclick=(e)=>{
+e.stopPropagation();
+openReader(edition);
+};
+
+results.appendChild(div);
+
+});
 
 }
 
@@ -348,6 +352,7 @@ document.getElementById("readerFrame").src=
 function closeReader(){
 
 document.getElementById("reader").style.display="none";
+
 document.getElementById("readerFrame").src="";
 
 }
@@ -357,23 +362,19 @@ document.getElementById("readerFrame").src="";
 function goHome(){
 
 document.getElementById("featured").style.display="flex";
+
 document.getElementById("searchResults").innerHTML="";
 
 }
 
-/* START SITE */
+/* PAGE LOAD */
 
 loadFeatured();
 loadRecommendations();
 
-/* REMOVE LOADER */
-
-setTimeout(()=>{
-document.getElementById("loader").classList.add("fade");
-},1800);
-
 </script>
 
 </body>
+
 </html>
 ```
