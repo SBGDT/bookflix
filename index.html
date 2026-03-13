@@ -1,4 +1,4 @@
-
+```html
 <!DOCTYPE html>
 <html>
 
@@ -41,28 +41,23 @@ pointer-events:none;
 font-size:140px;
 color:#e50914;
 font-weight:bold;
-animation:bookflixGlow 1.5s infinite alternate;
+animation:glow 1.5s infinite alternate;
 }
 
 .loaderText{
-color:white;
 letter-spacing:6px;
 margin-top:10px;
-font-size:18px;
 }
 
-@keyframes bookflixGlow{
-
-0%{
+@keyframes glow{
+from{
 transform:scale(1);
 text-shadow:0 0 10px #e50914;
 }
-
-100%{
+to{
 transform:scale(1.2);
 text-shadow:0 0 50px #e50914;
 }
-
 }
 
 /* NAVBAR */
@@ -131,7 +126,30 @@ width:100%;
 border-radius:6px;
 }
 
-/* EXPANSION CARD */
+/* BADGE */
+
+.badge{
+position:absolute;
+top:6px;
+left:6px;
+padding:3px 6px;
+font-size:11px;
+border-radius:4px;
+font-weight:bold;
+z-index:20;
+}
+
+.available{
+background:#2ecc71;
+color:black;
+}
+
+.unavailable{
+background:#e50914;
+color:white;
+}
+
+/* HOVER EXPANSION */
 
 .hoverCard{
 position:absolute;
@@ -207,22 +225,16 @@ font-size:12px;
 /* MOBILE */
 
 @media (max-width:700px){
-
 .book{width:40%;}
-
 #featured{padding:20px;}
-
 }
 
 @media (max-width:450px){
-
 .book{width:80%;}
-
 .navbar{
 flex-direction:column;
 align-items:flex-start;
 }
-
 }
 
 </style>
@@ -249,13 +261,11 @@ align-items:flex-start;
 <!-- FEATURED -->
 
 <div id="featured">
-
 <div id="featuredInfo">
 <h1 id="featuredTitle"></h1>
 <p id="featuredAuthor"></p>
 <button onclick="readFeatured()">READ</button>
 </div>
-
 </div>
 
 <h2 style="padding-left:20px;">Search Results</h2>
@@ -267,11 +277,8 @@ align-items:flex-start;
 <!-- READER -->
 
 <div id="reader">
-
 <button id="closeReader" onclick="closeReader()">Close Reader</button>
-
 <iframe id="readerFrame"></iframe>
-
 </div>
 
 <footer>
@@ -282,7 +289,7 @@ made by liam rodriguez
 
 let featuredBookKey="";
 
-/* CREATE BOOK CARD */
+/* CREATE BOOK */
 
 function createBook(book,parent){
 
@@ -294,10 +301,14 @@ let author = book.author_name ? book.author_name[0] : "Unknown";
 
 let edition = book.edition_key ? book.edition_key[0] : null;
 
+let status = edition ? "AVAILABLE" : "UNAVAILABLE";
+let badgeClass = edition ? "available" : "unavailable";
+
 let div=document.createElement("div");
 div.className="book";
 
 div.innerHTML=`
+<div class="badge ${badgeClass}">${status}</div>
 <img src="${cover}">
 <div class="hoverCard">
 <b>${book.title}</b><br>
@@ -308,11 +319,13 @@ ${author}<br>
 
 div.querySelector(".readBtn").onclick=(e)=>{
 e.stopPropagation();
+
 if(edition){
 openReader(edition);
 }else{
-alert("Preview not available for this book.");
+alert("This book is not available.");
 }
+
 };
 
 parent.appendChild(div);
@@ -347,11 +360,9 @@ featuredBookKey = book.edition_key ? book.edition_key[0] : "";
 }
 
 function readFeatured(){
-
 if(featuredBookKey){
 openReader(featuredBookKey);
 }
-
 }
 
 /* SEARCH */
@@ -426,11 +437,9 @@ document.getElementById("searchResults").innerHTML="";
 /* ENTER KEY SEARCH */
 
 document.getElementById("searchBox").addEventListener("keypress",function(e){
-
 if(e.key==="Enter"){
 searchBooks();
 }
-
 });
 
 /* LOAD PAGE */
@@ -438,17 +447,14 @@ searchBooks();
 loadFeatured();
 loadRecommendations();
 
-/* LOADER FADE */
+/* LOADER */
 
 setTimeout(()=>{
-
 document.getElementById("loader").classList.add("hide");
-
 },1500);
 
 </script>
 
 </body>
-
 </html>
-
+```
