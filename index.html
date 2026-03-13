@@ -1,4 +1,4 @@
-
+```html
 <!DOCTYPE html>
 <html>
 
@@ -13,6 +13,56 @@ margin:0;
 background:#141414;
 color:white;
 font-family:Arial;
+}
+
+/* LOADER */
+
+#loader{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+background:black;
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+z-index:9999;
+transition:opacity 1s;
+}
+
+#loader.hide{
+opacity:0;
+pointer-events:none;
+}
+
+.loaderB{
+font-size:140px;
+color:#e50914;
+font-weight:bold;
+animation:bookflixGlow 1.5s infinite alternate;
+}
+
+.loaderText{
+color:white;
+letter-spacing:6px;
+margin-top:10px;
+font-size:18px;
+}
+
+@keyframes bookflixGlow{
+
+0%{
+transform:scale(1);
+text-shadow:0 0 10px #e50914;
+}
+
+100%{
+transform:scale(1.2);
+text-shadow:0 0 50px #e50914;
+}
+
 }
 
 /* NAVBAR */
@@ -57,7 +107,7 @@ border-radius:6px;
 max-width:400px;
 }
 
-/* BOOK SECTIONS */
+/* BOOK GRID */
 
 #results,#searchResults{
 display:flex;
@@ -73,42 +123,49 @@ justify-content:center;
 width:150px;
 position:relative;
 cursor:pointer;
+transition:transform 0.3s;
 }
 
 .book img{
 width:100%;
 border-radius:6px;
-transition:0.3s;
 }
 
-.book:hover img{
-transform:scale(1.15);
-}
+/* EXPANSION CARD */
 
 .hoverCard{
 position:absolute;
-bottom:0;
-left:0;
-right:0;
-background:rgba(0,0,0,0.9);
-padding:10px;
+left:-10px;
+right:-10px;
+bottom:-10px;
+background:#181818;
+padding:12px;
+border-radius:6px;
 opacity:0;
+transform:translateY(10px);
 transition:0.3s;
-border-radius:0 0 6px 6px;
-font-size:14px;
+box-shadow:0 10px 30px rgba(0,0,0,0.8);
+z-index:5;
+}
+
+.book:hover{
+transform:scale(1.15);
+z-index:10;
 }
 
 .book:hover .hoverCard{
 opacity:1;
+transform:translateY(0);
 }
 
 .readBtn{
 background:#e50914;
 border:none;
 color:white;
-padding:5px 10px;
-margin-top:5px;
+padding:6px 12px;
+margin-top:6px;
 cursor:pointer;
+border-radius:3px;
 }
 
 /* READER */
@@ -150,14 +207,22 @@ font-size:12px;
 /* MOBILE */
 
 @media (max-width:700px){
+
 .book{width:40%;}
+
 #featured{padding:20px;}
-#featured h1{font-size:24px;}
+
 }
 
 @media (max-width:450px){
+
 .book{width:80%;}
-.navbar{flex-direction:column;align-items:flex-start;}
+
+.navbar{
+flex-direction:column;
+align-items:flex-start;
+}
+
 }
 
 </style>
@@ -165,21 +230,32 @@ font-size:12px;
 
 <body>
 
+<!-- LOADER -->
+
+<div id="loader">
+<div class="loaderB">B</div>
+<div class="loaderText">BOOKFLIX</div>
+</div>
+
 <div class="navbar">
+
 <div class="logo" onclick="goHome()">BOOKFLIX</div>
 
 <input id="searchBox" placeholder="Search books...">
 <button onclick="searchBooks()">Search</button>
+
 </div>
 
 <!-- FEATURED -->
 
 <div id="featured">
+
 <div id="featuredInfo">
 <h1 id="featuredTitle"></h1>
 <p id="featuredAuthor"></p>
 <button onclick="readFeatured()">READ</button>
 </div>
+
 </div>
 
 <h2 style="padding-left:20px;">Search Results</h2>
@@ -191,8 +267,11 @@ font-size:12px;
 <!-- READER -->
 
 <div id="reader">
+
 <button id="closeReader" onclick="closeReader()">Close Reader</button>
+
 <iframe id="readerFrame"></iframe>
+
 </div>
 
 <footer>
@@ -268,9 +347,11 @@ featuredBookKey = book.edition_key ? book.edition_key[0] : "";
 }
 
 function readFeatured(){
+
 if(featuredBookKey){
 openReader(featuredBookKey);
 }
+
 }
 
 /* SEARCH */
@@ -329,7 +410,6 @@ document.getElementById("readerFrame").src=
 function closeReader(){
 
 document.getElementById("reader").style.display="none";
-
 document.getElementById("readerFrame").src="";
 
 }
@@ -339,7 +419,6 @@ document.getElementById("readerFrame").src="";
 function goHome(){
 
 document.getElementById("featured").style.display="flex";
-
 document.getElementById("searchResults").innerHTML="";
 
 }
@@ -347,9 +426,11 @@ document.getElementById("searchResults").innerHTML="";
 /* ENTER KEY SEARCH */
 
 document.getElementById("searchBox").addEventListener("keypress",function(e){
+
 if(e.key==="Enter"){
 searchBooks();
 }
+
 });
 
 /* LOAD PAGE */
@@ -357,9 +438,17 @@ searchBooks();
 loadFeatured();
 loadRecommendations();
 
+/* LOADER FADE */
+
+setTimeout(()=>{
+
+document.getElementById("loader").classList.add("hide");
+
+},1500);
+
 </script>
 
 </body>
 
 </html>
-
+```
