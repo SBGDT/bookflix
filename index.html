@@ -4,7 +4,6 @@
 
 <head>
 <title>BOOKFLIX</title>
-
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
@@ -16,7 +15,7 @@ color:white;
 font-family:Arial;
 }
 
-/* LOADING SCREEN */
+/* LOADER */
 
 #loader{
 position:fixed;
@@ -26,33 +25,39 @@ width:100%;
 height:100%;
 background:black;
 display:flex;
+flex-direction:column;
 align-items:center;
 justify-content:center;
-flex-direction:column;
 z-index:9999;
+transition:opacity 1s ease;
+}
+
+#loader.fade{
+opacity:0;
+pointer-events:none;
 }
 
 .loaderB{
 font-size:120px;
 font-weight:bold;
 color:#e50914;
-animation: glow 1.5s infinite alternate;
+animation: glow 1.4s infinite alternate;
 }
 
 @keyframes glow{
 from{
-text-shadow:0 0 10px #e50914;
 transform:scale(1);
+text-shadow:0 0 10px #e50914;
 }
 to{
-text-shadow:0 0 40px #e50914;
 transform:scale(1.15);
+text-shadow:0 0 40px #e50914;
 }
 }
 
 .loadingText{
-margin-top:10px;
 color:#aaa;
+margin-top:10px;
 }
 
 /* NAVBAR */
@@ -97,7 +102,7 @@ border-radius:6px;
 max-width:400px;
 }
 
-/* BOOK SECTIONS */
+/* BOOK GRID */
 
 #results,#searchResults{
 display:flex;
@@ -106,8 +111,6 @@ gap:20px;
 padding:20px;
 justify-content:center;
 }
-
-/* BOOK CARD */
 
 .book{
 width:150px;
@@ -205,7 +208,7 @@ font-size:12px;
 
 <body>
 
-<!-- LOADING SCREEN -->
+<!-- LOADER -->
 
 <div id="loader">
 <div class="loaderB">B</div>
@@ -213,12 +216,9 @@ font-size:12px;
 </div>
 
 <div class="navbar">
-
 <div class="logo" onclick="goHome()">BOOKFLIX</div>
-
 <input id="searchBox" placeholder="Search books...">
 <button onclick="searchBooks()">Search</button>
-
 </div>
 
 <div id="featured">
@@ -252,10 +252,14 @@ let featuredBookKey="";
 
 async function loadFeatured(){
 
+try{
+
 let response=await fetch("https://openlibrary.org/search.json?q=fantasy&has_fulltext=true");
 let data=await response.json();
 
 let book=data.docs.find(b=>b.cover_i && b.edition_key);
+
+if(!book) return;
 
 let cover="https://covers.openlibrary.org/b/id/"+book.cover_i+"-L.jpg";
 
@@ -267,6 +271,10 @@ document.getElementById("featuredAuthor").innerText=
 book.author_name ? book.author_name[0] : "Unknown";
 
 featuredBookKey=book.edition_key[0];
+
+}catch(e){
+console.log("Featured failed");
+}
 
 }
 
@@ -321,6 +329,8 @@ results.appendChild(div);
 
 async function loadRecommendations(){
 
+try{
+
 let response=await fetch("https://openlibrary.org/search.json?q=classic&has_fulltext=true");
 let data=await response.json();
 
@@ -357,6 +367,10 @@ results.appendChild(div);
 
 });
 
+}catch(e){
+console.log("Recommendations failed");
+}
+
 }
 
 /* READER */
@@ -385,18 +399,16 @@ document.getElementById("searchResults").innerHTML="";
 
 }
 
-/* PAGE LOAD */
+/* START */
 
-async function startSite(){
+loadFeatured();
+loadRecommendations();
 
-await loadFeatured();
-await loadRecommendations();
+/* FADE LOADER AFTER 2s */
 
-document.getElementById("loader").style.display="none";
-
-}
-
-startSite();
+setTimeout(()=>{
+document.getElementById("loader").classList.add("fade");
+},2000);
 
 </script>
 
